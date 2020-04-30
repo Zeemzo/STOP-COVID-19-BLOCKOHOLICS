@@ -1,0 +1,50 @@
+service:
+  name: covid-service
+
+plugins:
+  - serverless-webpack
+  - serverless-offline
+  - serverless-prune-plugin
+custom:
+  path: "covid"
+  version: ${opt:version, 'api/v1'}
+  environment: ${opt:environment, 'dev'}
+  profile: ${opt:environment, 'dev'}
+  serverless-offline:
+    port: 7200
+    prefix: ${self:custom.version}
+  webpack:
+    includeModules: true
+    isLocal: false
+provider:
+  name: aws
+  region: us-east-1
+  runtime: nodejs12.x
+  stage: ${self:custom.profile}
+  environment: ${file(../../devops/env.yml):${self:custom.environment}}
+
+functions:
+  login:
+    handler: covid/handler.login
+    events:
+      - http:
+          method: post
+          path: ${self:custom.path}/login
+          cors: true
+          # authorizer: authorize
+  register:
+    handler: covid/handler.register
+    events:
+      - http:
+          method: post
+          path: ${self:custom.path}/register
+          cors: true
+          # authorizer: authorize
+  getAccount:
+    handler: covid/handler.getAccount
+    events:
+      - http:
+          method: get
+          path: ${self:custom.path}/users/{id}
+          cors: true
+          # authorizer: authorize
