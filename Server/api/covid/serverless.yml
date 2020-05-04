@@ -32,6 +32,14 @@ functions:
           path: ${self:custom.path}/login
           cors: true
           # authorizer: authorize
+  xdrLogin:
+    handler: covid/handler.xdrLogin
+    events:
+      - http:
+          method: post
+          path: ${self:custom.path}/xdrLogin
+          cors: true
+          # authorizer: authorize
   register:
     handler: covid/handler.register
     events:
@@ -46,5 +54,69 @@ functions:
       - http:
           method: get
           path: ${self:custom.path}/users/{id}
+          cors: true
+          # authorizer: authorize
+  searchAccounts:
+    handler: covid/handler.searchAccounts
+    events:
+      - http:
+          method: get
+          path: ${self:custom.path}/users
+          cors: true
+          # authorizer: authorize
+  # editAccount:
+  #   handler: covid/handler.editAccount
+  #   events:
+  #     - http:
+  #         method: put
+  #         path: ${self:custom.path}/user/{id}
+  #         cors: true
+  #         # authorizer: authorize
+  # deleteAccount:
+  #   handler: covid/handler.deleteAccount
+  #   events:
+  #     - http:
+  #         method: delete
+  #         path: ${self:custom.path}/user/{id}
+  #         cors: true
+  #         # authorizer: authorize
+  addInitiative:
+    handler: covid/handler.addInitiative
+    events:
+      - http:
+          method: post
+          path: ${self:custom.path}/initiatives
+          cors: true
+          # authorizer: authorize
+  editInitiative:
+    handler: covid/handler.editInitiative
+    events:
+      - http:
+          method: put
+          path: ${self:custom.path}/initiatives/{id}
+          cors: true
+          # authorizer: authorize
+  deleteInitiative:
+    handler: covid/handler.deleteInitiative
+    events:
+      - http:
+          method: delete
+          path: ${self:custom.path}/initiatives/{id}
+          cors: true
+          # authorizer: authorize
+  getInitiative:
+    handler: covid/handler.getInitiative
+    events:
+      - http:
+          method: get
+          path: ${self:custom.path}/initiatives/{id}
+          cors: true
+          # authorizer: authorize
+  searchInitiatives:
+    handler: covid/handler.searchInitiatives
+    events:
+      - http:
+          method: get
+          path: ${self:custom.path}/initiatives
           cors: true
           # authorizer: authorize
