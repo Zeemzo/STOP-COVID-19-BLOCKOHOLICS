@@ -3,7 +3,14 @@ import { UserService } from "./covid.service";
 import { createResponse } from "../utils/response-generator";
 import { logger } from "../utils/logger";
 import * as jwt from "jsonwebtoken";
-import { loginSchema, registerSchema } from "../models/covid.model";
+import {
+  loginSchema,
+  registerSchema,
+  loginWithSecretSchema,
+  editUserSchema,
+  addInitiativeSchema,
+  editInitiativeSchema,
+} from "../models/covid.model";
 
 export const tokenViewer = (event: APIGatewayEvent) => {
   if (typeof event.headers.Authorization === "undefined") {
@@ -88,6 +95,28 @@ export const login = async (event: APIGatewayEvent, context: Context) => {
   }
 };
 
+export const xdrLogin = async (event: APIGatewayEvent, context: Context) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  try {
+    await loginWithSecretSchema.validateAsync(JSON.parse(event.body));
+
+    const post = await UserService.xdrLogin(event);
+
+    logger.info("success!");
+    return createResponse(post.code, post);
+  } catch (error) {
+    logger.error(error);
+    return createResponse(HTTPStatusCodes.BAD_REQUEST, {
+      code: 400,
+      message: error.details[0].message,
+      data: null,
+    });
+  } finally {
+    logger.info("connection closed");
+  }
+};
+
 export const register = async (event: APIGatewayEvent, context: Context) => {
   context.callbackWaitsForEmptyEventLoop = false;
 
@@ -118,6 +147,187 @@ export const getAccount = async (event: APIGatewayEvent, context: Context) => {
       return createResponse(auth.code, auth);
     }
     let post = await UserService.getAccount(event);
+    logger.info("success!");
+    return createResponse(post.code, post);
+  } catch (error) {
+    logger.error(error);
+    return createResponse(HTTPStatusCodes.BAD_REQUEST, {
+      code: 400,
+      message: error.details[0].message,
+      data: null,
+    });
+  } finally {
+    logger.info("connection closed");
+  }
+};
+
+export const searchAccounts = async (
+  event: APIGatewayEvent,
+  context: Context
+) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  try {
+    const auth = await authMiddleware(event, ["1", "2", "3", "4", "5"]);
+    if (auth.data == null) {
+      return createResponse(auth.code, auth);
+    }
+    let post = await UserService.searchAccounts(event);
+    logger.info("success!");
+    return createResponse(post.code, post);
+  } catch (error) {
+    logger.error(error);
+    return createResponse(HTTPStatusCodes.BAD_REQUEST, {
+      code: 400,
+      message: error.details[0].message,
+      data: null,
+    });
+  } finally {
+    logger.info("connection closed");
+  }
+};
+
+export const addInitiative = async (
+  event: APIGatewayEvent,
+  context: Context
+) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  try {
+    const auth = await authMiddleware(event, ["1", "2", "3", "4", "5"]);
+    if (auth.data == null) {
+      return createResponse(auth.code, auth);
+    }
+    await addInitiativeSchema.validateAsync(JSON.parse(event.body));
+
+    let post = await UserService.addInitiative(event);
+
+    logger.info("success!");
+    return createResponse(post.code, post);
+  } catch (error) {
+    logger.error(error);
+    return createResponse(HTTPStatusCodes.BAD_REQUEST, {
+      code: 400,
+      message: error.details[0].message,
+      data: null,
+    });
+  } finally {
+    logger.info("connection closed");
+  }
+};
+
+export const editInitiative = async (
+  event: APIGatewayEvent,
+  context: Context
+) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  try {
+    const auth = await authMiddleware(event, ["1", "2", "3", "4", "5"]);
+    if (auth.data == null) {
+      return createResponse(auth.code, auth);
+    }
+    await editInitiativeSchema.validateAsync(JSON.parse(event.body));
+
+    let post = await UserService.editInitiative(event);
+
+    logger.info("success!");
+    return createResponse(post.code, post);
+  } catch (error) {
+    logger.error(error);
+    return createResponse(HTTPStatusCodes.BAD_REQUEST, {
+      code: 400,
+      message: error.details[0].message,
+      data: null,
+    });
+  } finally {
+    logger.info("connection closed");
+  }
+};
+
+export const deleteInitiative = async (
+  event: APIGatewayEvent,
+  context: Context
+) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  try {
+    const auth = await authMiddleware(event, ["1", "2", "3", "4", "5"]);
+    if (auth.data == null) {
+      return createResponse(auth.code, auth);
+    }
+
+    let post = await UserService.deleteInitiative(event);
+
+    logger.info("success!");
+    return createResponse(post.code, post);
+  } catch (error) {
+    logger.error(error);
+    return createResponse(HTTPStatusCodes.BAD_REQUEST, {
+      code: 400,
+      message: error.details[0].message,
+      data: null,
+    });
+  } finally {
+    logger.info("connection closed");
+  }
+};
+
+export const getInitiative = async (
+  event: APIGatewayEvent,
+  context: Context
+) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  try {
+    let post = await UserService.getInitiative(event);
+
+    logger.info("success!");
+    return createResponse(post.code, post);
+  } catch (error) {
+    logger.error(error);
+    return createResponse(HTTPStatusCodes.BAD_REQUEST, {
+      code: 400,
+      message: error.details[0].message,
+      data: null,
+    });
+  } finally {
+    logger.info("connection closed");
+  }
+};
+
+export const listInitiatives = async (
+  event: APIGatewayEvent,
+  context: Context
+) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  try {
+    let post = await UserService.listInitiatives(event);
+
+    logger.info("success!");
+    return createResponse(post.code, post);
+  } catch (error) {
+    logger.error(error);
+    return createResponse(HTTPStatusCodes.BAD_REQUEST, {
+      code: 400,
+      message: error.details[0].message,
+      data: null,
+    });
+  } finally {
+    logger.info("connection closed");
+  }
+};
+
+export const searchInitiatives = async (
+  event: APIGatewayEvent,
+  context: Context
+) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  try {
+    let post = await UserService.searchInitiatives(event);
+
     logger.info("success!");
     return createResponse(post.code, post);
   } catch (error) {
