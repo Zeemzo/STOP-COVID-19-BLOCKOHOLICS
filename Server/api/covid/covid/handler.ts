@@ -10,6 +10,8 @@ import {
   editUserSchema,
   addInitiativeSchema,
   editInitiativeSchema,
+  fundTranasctionSchema,
+  addKYCSchema,
 } from "../models/covid.model";
 
 export const tokenViewer = (event: APIGatewayEvent) => {
@@ -21,7 +23,7 @@ export const tokenViewer = (event: APIGatewayEvent) => {
     return null;
   }
   const token = split[1].trim();
-  const tokenPayload = jwt.verify(token, process.env.jwt_secret);
+  const tokenPayload = jwt.verify(token, "ijk3dp4n");
   if (tokenPayload) {
     return tokenPayload;
   }
@@ -48,7 +50,7 @@ export const authMiddleware = (
       };
     }
     const token = split[1].trim();
-    const tokenPayload = jwt.verify(token, process.env.jwt_secret);
+    const tokenPayload = jwt.verify(token, "ijk3dp4n");
     if (tokenPayload) {
       if (roles.indexOf(tokenPayload["type"]) > -1) {
         return {
@@ -95,7 +97,10 @@ export const login = async (event: APIGatewayEvent, context: Context) => {
   }
 };
 
-export const xdrLogin = async (event: APIGatewayEvent, context: Context) => {
+export const xdrLogin = async (
+  event: APIGatewayEvent,
+  context: Context
+) => {
   context.callbackWaitsForEmptyEventLoop = false;
 
   try {
@@ -161,10 +166,7 @@ export const getAccount = async (event: APIGatewayEvent, context: Context) => {
   }
 };
 
-export const searchAccounts = async (
-  event: APIGatewayEvent,
-  context: Context
-) => {
+export const searchAccounts = async (event: APIGatewayEvent, context: Context) => {
   context.callbackWaitsForEmptyEventLoop = false;
 
   try {
@@ -187,34 +189,6 @@ export const searchAccounts = async (
   }
 };
 
-export const addInitiative = async (
-  event: APIGatewayEvent,
-  context: Context
-) => {
-  context.callbackWaitsForEmptyEventLoop = false;
-
-  try {
-    const auth = await authMiddleware(event, ["1", "2", "3", "4", "5"]);
-    if (auth.data == null) {
-      return createResponse(auth.code, auth);
-    }
-    await addInitiativeSchema.validateAsync(JSON.parse(event.body));
-
-    let post = await UserService.addInitiative(event);
-
-    logger.info("success!");
-    return createResponse(post.code, post);
-  } catch (error) {
-    logger.error(error);
-    return createResponse(HTTPStatusCodes.BAD_REQUEST, {
-      code: 400,
-      message: error.details[0].message,
-      data: null,
-    });
-  } finally {
-    logger.info("connection closed");
-  }
-};
 
 export const editInitiative = async (
   event: APIGatewayEvent,
@@ -280,6 +254,7 @@ export const getInitiative = async (
   context.callbackWaitsForEmptyEventLoop = false;
 
   try {
+  
     let post = await UserService.getInitiative(event);
 
     logger.info("success!");
@@ -303,6 +278,7 @@ export const listInitiatives = async (
   context.callbackWaitsForEmptyEventLoop = false;
 
   try {
+
     let post = await UserService.listInitiatives(event);
 
     logger.info("success!");
@@ -326,7 +302,96 @@ export const searchInitiatives = async (
   context.callbackWaitsForEmptyEventLoop = false;
 
   try {
+
     let post = await UserService.searchInitiatives(event);
+
+    logger.info("success!");
+    return createResponse(post.code, post);
+  } catch (error) {
+    logger.error(error);
+    return createResponse(HTTPStatusCodes.BAD_REQUEST, {
+      code: 400,
+      message: error.details[0].message,
+      data: null,
+    });
+  } finally {
+    logger.info("connection closed");
+  }
+};
+
+export const addInitiative = async (
+  event: APIGatewayEvent,
+  context: Context
+) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  try {
+    const auth = await authMiddleware(event, ["1", "2", "3", "4", "5"]);
+    if (auth.data == null) {
+      return createResponse(auth.code, auth);
+    }
+    await addInitiativeSchema.validateAsync(JSON.parse(event.body));
+
+    let post = await UserService.addInitiative(event);
+
+    logger.info("success!");
+    return createResponse(post.code, post);
+  } catch (error) {
+    logger.error(error);
+    return createResponse(HTTPStatusCodes.BAD_REQUEST, {
+      code: 400,
+      message: error.details[0].message,
+      data: null,
+    });
+  } finally {
+    logger.info("connection closed");
+  }
+};
+
+
+export const fundTransaction = async (
+  event: APIGatewayEvent,
+  context: Context
+) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  try {
+    const auth = await authMiddleware(event, ["1", "2", "3", "4", "5"]);
+    if (auth.data == null) {
+      return createResponse(auth.code, auth);
+    }
+    await fundTranasctionSchema.validateAsync(JSON.parse(event.body));
+
+    let post = await UserService.fundTransaction(event);
+
+    logger.info("success!");
+    return createResponse(post.code, post);
+  } catch (error) {
+    logger.error(error);
+    return createResponse(HTTPStatusCodes.BAD_REQUEST, {
+      code: 400,
+      message: error.details[0].message,
+      data: null,
+    });
+  } finally {
+    logger.info("connection closed");
+  }
+};
+
+export const addKYC = async (
+  event: APIGatewayEvent,
+  context: Context
+) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  try {
+    const auth = await authMiddleware(event, ["1", "2", "3", "4", "5"]);
+    if (auth.data == null) {
+      return createResponse(auth.code, auth);
+    }
+    await addKYCSchema.validateAsync(JSON.parse(event.body));
+
+    let post = await UserService.addKYC(event);
 
     logger.info("success!");
     return createResponse(post.code, post);

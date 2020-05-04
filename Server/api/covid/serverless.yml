@@ -120,3 +120,19 @@ functions:
           path: ${self:custom.path}/initiatives
           cors: true
           # authorizer: authorize
+  fundTransaction:
+    handler: covid/handler.fundTransaction
+    events:
+      - http:
+          method: post
+          path: ${self:custom.path}/transactions/fund
+          cors: true
+          # authorizer: authorize
+  addKYC:
+    handler: covid/handler.addKYC
+    events:
+      - http:
+          method: post
+          path: ${self:custom.path}/kyc
+          cors: true
+          # authorizer: authorize

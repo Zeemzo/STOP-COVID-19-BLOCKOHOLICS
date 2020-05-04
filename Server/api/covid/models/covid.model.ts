@@ -7,7 +7,7 @@ export const registerSchema = Joi.object({
   encryptedSecret: Joi.string().optional().allow(""),
   recoveryQuestion: Joi.string().optional().allow(""),
   encryptedRecoverySecret: Joi.string().optional().allow(""),
-  authType: Joi.number().valid(0,1,2).optional(),
+  authType: Joi.number().valid(0, 1, 2).optional(),
 });
 
 export const loginSchema = Joi.object({
@@ -58,6 +58,13 @@ export const editInitiativeSchema = Joi.object({
   paymentDetails: Joi.object().optional(),
 });
 
+export const fundTranasctionSchema = Joi.object({
+  xdr: Joi.string().required(),
+});
+
+export class FundTranasction {
+  xdr: String;
+}
 export class Initiative {
   _id: String;
   name: String;
@@ -79,6 +86,8 @@ export class User {
   name: String;
   email: String;
   dob: String;
+  verified: Boolean;
+  authType: String;
   type: String;
   publicKey: String;
   encryptedSecret: String;
@@ -88,3 +97,39 @@ export class User {
   createdAt: String;
   updatedAt: String;
 }
+
+export class KYC {
+  _id: String;
+  publicKey: String;
+  idNo: String;
+  dob: Date;
+  idFront: String;
+  idBack: String;
+  faceIdFront: String;
+  fullname: String;
+  telephone: String;
+  addressLineOne: String;
+  addressLineTwo: String;
+  city: String;
+  province: String;
+  country: String;
+  approved: Boolean;
+  createdAt: String;
+  updatedAt: String;
+}
+
+export const addKYCSchema = Joi.object({
+  idNo: Joi.string().required(),
+  dob: Joi.date().required(),
+  idFront: Joi.string().required(),
+  idBack: Joi.string().required(),
+  faceIdFront: Joi.string().required(),
+  fullname: Joi.string().required(),
+  telephone: Joi.string().required(),
+  addressLineOne: Joi.string().required(),
+  addressLineTwo: Joi.string().optional().allow(""),
+  city: Joi.string().required(),
+  province: Joi.string().optional(),
+  zipCode: Joi.number().required(),
+  country: Joi.string().required(),
+});

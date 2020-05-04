@@ -2,7 +2,7 @@ import * as mongodb from "../utils/mongodb";
 import { APIGatewayEvent } from "aws-lambda";
 import { ObjectId, Cursor } from "mongodb";
 import { tokenViewer } from "../covid/handler";
-import { User, Initiative } from "../models/covid.model";
+import { User, Initiative, KYC  } from "../models/covid.model";
 import sha256 from "sha256";
 
 const dbName = process.env.db_name;
@@ -22,12 +22,6 @@ export class UserRepository {
           };
         }
       }
-
-      // let userId = "";
-      // if (token != null) {
-      //   userId = token.sub;
-      // }
-
       const db = mongodb.client.db(dbName);
       const page = db.collection("user");
 
@@ -37,10 +31,19 @@ export class UserRepository {
             _id: id,
           },
         },
+        {
+          $lookup: {
+            from: "kyc",
+            localField: "publicKey",
+            foreignField: "publicKey",
+            as: "kyc",
+          },
+        },
       ]);
 
       let result = [];
       await cursor.forEach((item) => {
+        item.kyc = item.kyc.length > 0 ? item.kyc[0] : null;
         result.push(item);
       });
       return {
@@ -72,11 +75,6 @@ export class UserRepository {
         }
       }
 
-      // let userId = "";
-      // if (token != null) {
-      //   userId = token.sub;
-      // }
-
       const db = mongodb.client.db(dbName);
       const page = db.collection("user");
 
@@ -86,10 +84,19 @@ export class UserRepository {
             alias: alias,
           },
         },
+        {
+          $lookup: {
+            from: "kyc",
+            localField: "publicKey",
+            foreignField: "publicKey",
+            as: "kyc",
+          },
+        },
       ]);
 
       let result = [];
       await cursor.forEach((item) => {
+        item.kyc = item.kyc.length > 0 ? item.kyc[0] : null;
         result.push(item);
       });
       return {
@@ -120,11 +127,6 @@ export class UserRepository {
         }
       }
 
-      // let userId = "";
-      // if (token != null) {
-      //   userId = token.sub;
-      // }
-
       const db = mongodb.client.db(dbName);
       const page = db.collection("user");
 
@@ -134,10 +136,19 @@ export class UserRepository {
             email: email,
           },
         },
+        {
+          $lookup: {
+            from: "kyc",
+            localField: "publicKey",
+            foreignField: "publicKey",
+            as: "kyc",
+          },
+        },
       ]);
 
       let result = [];
       await cursor.forEach((item) => {
+        item.kyc = item.kyc.length > 0 ? item.kyc[0] : null;
         result.push(item);
       });
       return {
@@ -169,11 +180,6 @@ export class UserRepository {
         }
       }
 
-      // let userId = "";
-      // if (token != null) {
-      //   userId = token.sub;
-      // }
-
       const db = mongodb.client.db(dbName);
       const page = db.collection("user");
 
@@ -183,10 +189,19 @@ export class UserRepository {
             publicKey: publicKey,
           },
         },
+        {
+          $lookup: {
+            from: "kyc",
+            localField: "publicKey",
+            foreignField: "publicKey",
+            as: "kyc",
+          },
+        },
       ]);
 
       let result = [];
       await cursor.forEach((item) => {
+        item.kyc = item.kyc.length > 0 ? item.kyc[0] : null;
         result.push(item);
       });
       return {
@@ -221,6 +236,7 @@ export class UserRepository {
       const db = mongodb.client.db(dbName);
       const page = db.collection("user");
 
+      schema.verified = false;
       schema.type = "2";
       schema.createdAt = new Date().toISOString();
       schema._id = new ObjectId().toHexString();
@@ -236,6 +252,88 @@ export class UserRepository {
       return {
         code: 400,
         message: e.errmsg,
+        data: null,
+      };
+    }
+  }
+
+  public static async addKYC(kyc: KYC) {
+    const schema: KYC = kyc;
+    try {
+      if (!mongodb.client.isConnected()) {
+        // Cold start or connection timed out. Create new connection.
+        try {
+          await mongodb.createConn();
+        } catch (e) {
+          return {
+            code: 500,
+            message: e,
+            data: null,
+          };
+        }
+      }
+      const db = mongodb.client.db(dbName);
+      const page = db.collection("kyc");
+
+      schema.approved = false;
+      schema.createdAt = new Date().toISOString();
+      schema._id = new ObjectId().toHexString();
+      const dbResponse = await page.insertOne(schema);
+
+      return {
+        code: 200,
+        message: "success",
+        data: dbResponse ? schema : null,
+      };
+      // }
+    } catch (e) {
+      return {
+        code: 400,
+        message: e.errmsg,
+        data: null,
+      };
+    }
+  }
+
+  public static async getKYCByPublicKey(publicKey: string) {
+    try {
+      if (!mongodb.client.isConnected()) {
+        // Cold start or connection timed out. Create new connection.
+        try {
+          await mongodb.createConn();
+        } catch (e) {
+          return {
+            code: 500,
+            message: e,
+            data: null,
+          };
+        }
+      }
+
+      const db = mongodb.client.db(dbName);
+      const page = db.collection("kyc");
+
+      const cursor = await page.aggregate([
+        {
+          $match: {
+            publicKey: publicKey,
+          },
+        },
+      ]);
+
+      let result = [];
+      await cursor.forEach((item) => {
+        result.push(item);
+      });
+      return {
+        code: 200,
+        message: "",
+        data: result.length > 0 ? result[0] : null,
+      };
+    } catch (e) {
+      return {
+        code: 400,
+        message: "failed",
         data: null,
       };
     }
@@ -333,13 +431,19 @@ export class UserRepository {
       const db = mongodb.client.db(dbName);
       const page = db.collection("user");
 
-      const cursor = await page.find({});
+      const cursor = await page.aggregate([
+        {
+          $match: {
+            verified: true,
+          },
+        },
+      ]);
       // .limit(20);
       let result = [];
       await cursor.forEach((item) => {
         result.push({
           _id: item._id,
-          name: item.name,
+          alias: item.alias,
           email: item.email,
           publicKey: item.publicKey,
         });

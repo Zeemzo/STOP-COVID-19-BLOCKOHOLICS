@@ -27,8 +27,8 @@ export class UserService {
 
       let user = await UserRepository.getUserByEmail(requestBody.key);
       if (user.data == null) {
-        let useralias = await UserRepository.getUserByAlias(requestBody.key);
-        if (useralias.data == null) {
+        user = await UserRepository.getUserByAlias(requestBody.key);
+        if (user.data == null) {
           return {
             code: 201,
             message: "account not found",
@@ -41,6 +41,7 @@ export class UserService {
         user.data.encryptedSecret,
         requestBody.password
       );
+      console.log(secret);
       if (user.data.publicKey == Keypair.fromSecret(secret).publicKey()) {
         let tokenBody = user.data;
         tokenBody.exp = Math.floor(new Date().getTime() / 1000.0) + 12000;
@@ -81,7 +82,7 @@ export class UserService {
           data: null,
         };
       }
-      
+
       let humanKeypair = Keypair.fromSecret(process.env.HumanDistributorSecret);
       parsedTx.sign(humanKeypair);
       // let x = parsedTx.toEnvelope().toXDR().toString("base64");
@@ -213,7 +214,7 @@ export class UserService {
         const options = {
           useExtendedSearch: true,
           includeScore: false,
-          keys: ["alias", "email"],
+          keys: ["alias", "publicKey"],
         };
 
         // Create a new instance of Fuse
@@ -245,6 +246,16 @@ export class UserService {
 
   public static async addInitiative(event: APIGatewayEvent) {
     try {
+
+      const tokenPayload: any = tokenViewer(event);
+      if(!tokenPayload.verified){
+        return {
+          code: 202,
+          message: "kyc approval pending",
+          data: null,
+        };
+      }
+      
       const requestBody = JSON.parse(event.body);
       // Create unique bucket name
       var bucketName = "corona-client-imagesdev-dev";
@@ -278,6 +289,11 @@ export class UserService {
           console.log("succesfully uploaded the image!");
         }
       });
+
+     
+
+
+
 
       let initiative = await UserRepository.addInitiative(requestBody);
       if (initiative.data == null) {
@@ -487,4 +503,106 @@ export class UserService {
       };
     }
   }
+
+  public static async fundTransaction(event: APIGatewayEvent) {
+    try {
+      var server = new StellarSdk.Server(process.env.StellarUrl);
+      const requestBody = JSON.parse(event.body);
+      const parsedTx = new Transaction(requestBody.xdr);
+      let publicKey = parsedTx.source;
+
+      let user = await UserRepository.getUserByPublicKey(publicKey);
+      if (user.data == null) {
+        return {
+          code: 201,
+          message: "account not found",
+          data: null,
+        };
+      }
+
+      if(!user.data.verified){
+        return {
+          code: 202,
+          message: "kyc approval is pending",
+          data: null,
+        };
+      }
+
+      let humanKeypair = Keypair.fromSecret(process.env.HumanDistributorSecret);
+      parsedTx.sign(humanKeypair);
+      // let x = parsedTx.toEnvelope().toXDR().toString("base64");
+
+      const stellarResponse = await server.submitTransaction(parsedTx);
+      if (stellarResponse == null) {
+        return {
+          code: 203,
+          message: "insufficient fund in account",
+          data: null,
+        };
+      }
+      // console.log(stellarResponse);
+
+      return {
+        code: 200,
+        message: "success",
+        data: null,
+      };
+    } catch (err) {
+      console.log(err);
+      return {
+        code: 400,
+        message: "Funding Failed",
+        data: null,
+      };
+    }
+  }
+
+  public static async addKYC(event: APIGatewayEvent) {
+    try {
+      const tokenPayload: any = tokenViewer(event);
+      const existingKYC = await UserRepository.getKYCByPublicKey(
+        tokenPayload.publicKey
+      );
+
+      if (existingKYC.data != null) {
+        if(existingKYC.data.approved){
+          return {
+            code: 201,
+            message: "Kyc already approved",
+            data: null,
+          };
+        }
+        return {
+          code: 202,
+          message: "Kyc is pending approval",
+          data: null,
+        };
+      }
+
+      const requestBody = JSON.parse(event.body);
+      requestBody.publicKey = tokenPayload.publicKey;
+
+      let kyc = await UserRepository.addKYC(requestBody);
+      if (kyc.data == null) {
+        return {
+          code: 203,
+          message: "Kyc Creation Failed",
+          data: null,
+        };
+      }
+      return {
+        code: 200,
+        message: "Success",
+        data: kyc.data,
+      };
+    } catch (err) {
+      console.log(err);
+      return {
+        code: 400,
+        message: "Kyc Creation Failed",
+        data: null,
+      };
+    }
+  }
+ 
 }
